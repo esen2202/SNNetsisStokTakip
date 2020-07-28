@@ -1,0 +1,71 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:local="clr-namespace:SNNetsisStokTakip.Assets.styles" 
+                    xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes">
+
+    <Style x:Key="LabelTextBlock" BasedOn="{StaticResource MaterialDesignBody2TextBlock}" 
+           TargetType="TextBlock">
+        <Setter Property="Foreground" Value="#FF92BFFF"/>
+        <Setter Property="FontWeight" Value="Normal"/>
+    </Style>
+
+    <Style x:Key="ValueTextBlock" BasedOn="{StaticResource MaterialDesignBody2TextBlock}" 
+           TargetType="TextBlock">
+        <Setter Property="Foreground" Value="#FFFFFFFF"/>
+        <Setter Property="FontWeight" Value="Normal"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontStyle" Value="Normal"/>
+    </Style>
+
+    <Style x:Key="CopyButton" BasedOn="{StaticResource MaterialDesignToolButton}" 
+           TargetType="Button">
+        <Setter Property="Width" Value="25"/>
+        <Setter Property="Height" Value="25"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="ContentTemplate">
+            <Setter.Value>
+                <DataTemplate>
+                    <materialDesign:PackIcon Kind="ContentCopy" Foreground="#FF36A5E4" />
+                </DataTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="AdapterListItemButton" BasedOn="{StaticResource MaterialDesignToolButton}" 
+           TargetType="Button">
+        <Setter Property="Padding" Value="0"/>
+    </Style>
+
+    <Style x:Key="ToolButtonBase" TargetType="Button" BasedOn="{StaticResource MaterialDesignToolButton}">
+        <Setter Property="Background" Value="#FF46AA0D"/>
+        <Setter Property="BorderBrush" Value="#19FFFFFF" />
+        <Setter Property="VerticalAlignment" Value="Bottom" />
+        <Setter Property="HorizontalAlignment" Value="Right" />
+        <Setter Property="Margin" Value="10 0 10 4"/>
+    </Style>
+
+    <Style x:Key="FloatingBar" TargetType="Border">
+        <Setter Property="Margin" Value="0,10,0,0" />
+        <Setter Property="CornerRadius" Value="2 0 0 2" />
+        <Setter Property="HorizontalAlignment" Value="Right" />
+        <Setter Property="VerticalAlignment" Value="Top" />
+        <Setter Property="Background" Value="#FF316089" />
+        <Setter Property="BorderThickness" Value="1,1,0,0" />
+        <Setter Property="BorderBrush" Value="#FF4085C1" />
+        <Setter Property="Height" Value="100" />
+        <Setter Property="Width" Value="4" />
+    </Style>
+
+    <Style x:Key="FloatingBarMove" TargetType="Border">
+        <Setter Property="Margin" Value="0,200,0,0" />
+        <Setter Property="CornerRadius" Value="2 0 0 2" />
+        <Setter Property="HorizontalAlignment" Value="Right" />
+        <Setter Property="VerticalAlignment" Value="Top" />
+        <Setter Property="Background" Value="DarkSlateBlue" />
+        <Setter Property="BorderThickness" Value="1,0,0,1" />
+        <Setter Property="BorderBrush" Value="DarkRed" />
+        <Setter Property="Height" Value="15" />
+        <Setter Property="Width" Value="4" />
+
+    </Style>
+</ResourceDictionary>
