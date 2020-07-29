@@ -12,6 +12,8 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.ComponentModel;
+
 
 namespace SNNetsisStokTakip.Views
 {
@@ -177,7 +179,7 @@ namespace SNNetsisStokTakip.Views
 			                    WHEN @EskiMiktar < @YeniMiktar THEN 'G'
 			                    WHEN @EskiMiktar  > @YeniMiktar THEN 'C' 
 		                    END
-		                    ,'2020-07-28 00:00:00','A' ,0 ,0.000000000000000,0);
+		                    ,@DateTime,'A' ,0 ,0.000000000000000,0);
 	                    END
 	                    SELECT @Result =  @@ROWCOUNT;
                     END
@@ -191,6 +193,7 @@ namespace SNNetsisStokTakip.Views
                     {
                         conn.Open();
                         cmd.Parameters.AddWithValue("@newAmount", amount);
+                        cmd.Parameters.AddWithValue("@DateTime", DateTime.Now);
                         cmd.Parameters.AddWithValue("@stockCode", stockCode);
                         int recordCount = (int)cmd.ExecuteScalar();
 
@@ -287,17 +290,14 @@ namespace SNNetsisStokTakip.Views
                     }
                     else if (result == 0)
                     {
-                        row.Background = new SolidColorBrush(Colors.IndianRed);
+                        row.Background = new SolidColorBrush(Colors.Lavender);
                     }
                     else
                     {
                         row.Background = new SolidColorBrush(Colors.DarkRed);
                         row.Foreground = new SolidColorBrush(Colors.White);
                     }
-
                 }
-         
-
             }
         }
 
@@ -308,18 +308,79 @@ namespace SNNetsisStokTakip.Views
 
         private void ExportToExcelAndCsv()
         {
-            dgDb.SelectAllCells();
-            dgDb.ClipboardCopyMode = DataGridClipboardCopyMode.IncludeHeader;
-            ApplicationCommands.Copy.Execute(null, dgDb);
-            String resultat = (string)Clipboard.GetData(DataFormats.CommaSeparatedValue);
-            String result = (string)Clipboard.GetData(DataFormats.Text);
-            dgDb.UnselectAllCells();
-            System.IO.StreamWriter file1 = new System.IO.StreamWriter(@"C:\stock.xls");
-            file1.WriteLine(result.Replace(',', ' '));
-            file1.Close();
+            DataTable dt = new DataTable();
+            dt = ((DataView)dgDb.ItemsSource).ToTable();
+           
+            SaveFileDialog saveFileDialog = new SaveFileDialog();
+            saveFileDialog.Filter = "excel (*.xlsx)|*.xlsx";
+            if (saveFileDialog.ShowDialog() == true)
+            {
+                GenerateExcel(dt);
+                workBook.SaveAs(saveFileDialog.FileName);
+                workBook.Close(); excel.Quit();
 
-            MessageBox.Show(" Exporting DataGrid data to Excel file created.xls");
+            }
         }
+
+        Microsoft.Office.Interop.Excel.Application excel;
+        Microsoft.Office.Interop.Excel.Workbook workBook;
+        Microsoft.Office.Interop.Excel.Worksheet workSheet;
+        Microsoft.Office.Interop.Excel.Range cellRange;
+
+        private void GenerateExcel(DataTable DtIN)
+        {
+            try
+            {
+                excel = new Microsoft.Office.Interop.Excel.Application();
+                excel.DisplayAlerts = false;
+                excel.Visible = false;
+                workBook = excel.Workbooks.Add(Type.Missing);
+                workSheet = (Microsoft.Office.Interop.Excel.Worksheet)workBook.ActiveSheet;
+                workSheet.Name = "NetsisStokListesi";
+                System.Data.DataTable tempDt = DtIN;
+                dgExcel.ItemsSource = tempDt.DefaultView;
+                workSheet.Cells.Font.Size = 11;
+                int rowcount = 1;
+                for (int i = 1; i <= tempDt.Columns.Count; i++) //taking care of Headers.  
+                {
+                    workSheet.Cells[1, i] = tempDt.Columns[i - 1].ColumnName;
+                }
+                foreach (System.Data.DataRow row in tempDt.Rows) //taking care of each Row  
+                {
+                    rowcount += 1;
+                    for (int i = 0; i < tempDt.Columns.Count; i++) //taking care of each column  
+                    {
+                        workSheet.Cells[rowcount, i + 1] = row[i].ToString();
+                    }
+                }
+                cellRange = workSheet.Range[workSheet.Cells[1, 1], workSheet.Cells[rowcount, tempDt.Columns.Count]];
+                cellRange.EntireColumn.AutoFit();
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+
+        //public static DataTable ToDataTable<T>(this IList<T> data)
+        //{
+        //    PropertyDescriptorCollection properties = TypeDescriptor.GetProperties(typeof(T));
+        //    DataTable dt = new DataTable();
+        //    foreach (PropertyDescriptor prop in properties)
+        //    {
+        //        dt.Columns.Add(prop.Name, Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType);
+        //    }
+        //    foreach (T item in data)
+        //    {
+        //        DataRow row = dt.NewRow();
+        //        foreach (PropertyDescriptor pdt in properties)
+        //        {
+        //            row[pdt.Name] = pdt.GetValue(item) ?? DBNull.Value;
+        //        }
+        //        dt.Rows.Add(row);
+        //    }
+        //    return dt;
+        //}
     }
 
 
