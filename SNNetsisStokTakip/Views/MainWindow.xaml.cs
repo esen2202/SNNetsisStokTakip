@@ -1,217 +1,141 @@
 ﻿using ExcelDataReader;
+using MaterialDesignThemes.Wpf;
+using Microsoft.Office.Interop.Excel;
 using Microsoft.Win32;
 using SNNetsisStokTakip.Classes;
-using SNNetsisStokTakip.Properties;
+using SNNetsisStokTakip.Models;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
 using System.IO;
-using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Input;
 using System.Windows.Media;
-using System.ComponentModel;
-
 
 namespace SNNetsisStokTakip.Views
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class MainWindow : System.Windows.Window
     {
+        public static Snackbar Snackbar;
+
+        public DataView Dv
+        {
+            get { return (DataView)GetValue(DvProperty); }
+            set { SetValue(DvProperty, value); }
+        }
+
+        public static readonly DependencyProperty DvProperty =
+            DependencyProperty.Register("Dv", typeof(DataView), typeof(MainWindow));
+
         public MainWindow()
         {
             InitializeComponent();
 
-            txtServer.Text = Settings.Default.Server;
-            txtUser.Text = Settings.Default.User;
-            txtPass.Text = Settings.Default.Pass;
-            txtServer.Text = Settings.Default.Server;
+            Snackbar = this.MainSnackbar;
+
         }
 
-        private void Cb_OnPreviewTextInput(object sender, TextCompositionEventArgs e)
+        private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
-            cb.IsDropDownOpen = true;
+            await LoadDgDataSource();
+
         }
 
-        private void btnConnect_Click(object sender, RoutedEventArgs e)
+        private async Task LoadDgDataSource()
         {
-            connectionString = new ModelConnStr
+            await Task.Run(() =>
             {
-                Server = txtServer.Text,
-                User = txtUser.Text,
-                Pass = txtPass.Text
-            };
-
-            cbDbList.ItemsSource = GetDBNames();
-        }
-
-        ModelConnStr connectionString;
-
-        public string GenerateConnStr(ModelConnStr modelConnStr)
-        {
-            string connStr = "";
-            if (modelConnStr != null)
-            {
-                connStr = string.Format("Data Source={0}", modelConnStr.Server);
-
-                if (!string.IsNullOrEmpty(modelConnStr.DbName))
-                    connStr = connStr + string.Format(";Initial Catalog={0}", modelConnStr.DbName);
-
-                if (!string.IsNullOrEmpty(modelConnStr.User))
-                    connStr = connStr + string.Format(";User ID={0};Password={1}", modelConnStr.User, modelConnStr.Pass);
-            }
-            return connStr;
-        }
-
-        public List<string> GetDBNames()
-        {
-            var result = new List<string>();
-            using (var conn = new SqlConnection(GenerateConnStr(connectionString)))
-            {
-                using (SqlCommand cmd = new SqlCommand("SELECT name from sys.databases", conn))
+                this.Dispatcher.Invoke(() =>
                 {
-                    conn.Open();
-                    using (SqlDataReader dr = cmd.ExecuteReader())
+                    dgDb.ItemsSource = ConnectionManagement.StocksTable;
+                    dgDb.Columns[0].IsReadOnly = true;
+                    Snackbar.MessageQueue.Enqueue("Stoklar Yüklendi");
+                    pbProcess.Visibility = Visibility.Hidden;
+                });
+            });
+        }
+
+        private void DgStockFilter(string stockKod)
+        {
+            ConnectionManagement.StocksTable.RowFilter = "(STOK_KODU like '" + stockKod + "*')"; // Stok_kodu - Adet
+        }
+
+        private async void btnProcessStart_Click(object sender, RoutedEventArgs e)
+        {
+            pbProcess.Visibility = Visibility.Visible;
+            successStocks.Clear();
+            faultStocks.Clear();
+            notrStocks.Clear();
+            await ProcessThread();
+        }
+
+        int totalSuccess, totalFailed;
+
+        List<ModelStock> successStocks = new List<ModelStock>();
+        List<ModelStock> faultStocks = new List<ModelStock>();
+        List<ModelStock> notrStocks = new List<ModelStock>();
+        private async Task ProcessThread()
+        {
+            await Task.Run(() =>
+            {
+                totalSuccess = totalFailed = 0;
+                if (dtStock != null)
+                {
+                    for (int i = 0; i < dtStock.DefaultView.Count; i++)
                     {
-                        while (dr.Read())
+
+                        var stockCode = dtStock.Rows[i][0].ToString();
+                        var amount = dtStock.Rows[i][1].ToString();
+
+                        int x = 0;
+
+                        Int32.TryParse(amount, out x);
+
+                        lblProgresRecord.Dispatcher.Invoke(() => { lblProgresRecord.Content = stockCode; });
+                        var result = ConnectionManagement.SqlOperations.InsertNewStockAmount(stockCode, x);
+                        if (result == 1)
                         {
-                            result.Add((string)dr[0]);
+                            totalSuccess++;
+                            successStocks.Add(new ModelStock { StockCode = stockCode, Amount = x });
                         }
-                    }
-                    conn.Close();
-                }
-            }
-            return result;
-        }
-
-
-        public void GetAllStocks()
-        {
-            var dt = GetRecords(@"Select Stok_kodu,ISNULL((SELECT Sum(STHAR_GCMIK)
-                                FROM  dbo.TBLSTHAR
-                                WHERE[STOK_KODU] = a.Stok_kodu AND STHAR_GCKOD = 'G'  Group By STOK_KODU),0) -ISNULL((SELECT Sum(STHAR_GCMIK)
-                                FROM  dbo.TBLSTHAR
-                                WHERE[STOK_KODU] = a.Stok_kodu AND STHAR_GCKOD = 'C' Group By STOK_KODU),0) as adet from dbo.TBLSTHAR as a
-                                Group By STOK_KODU");
-
-            if (dt != null)
-                dgDb.ItemsSource = dt.DefaultView;
-        }
-
-        public DataTable GetRecords(string query)
-        {
-            try
-            {
-                using (var conn = new SqlConnection(GenerateConnStr(connectionString)))
-                {
-                    using (var cmd = new SqlCommand(query, conn))
-                    {
-                        SqlDataAdapter sda = new SqlDataAdapter(cmd);
-                        DataTable dt = new DataTable("dbo.TBLSTHAR");
-                        sda.Fill(dt);
-
-                        return dt;
-                    }
-                }
-            }
-            catch (System.Exception ex)
-            {
-                MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                return null;
-            }
-        }
-
-        public bool IfExistStockCode(string stockCode)
-        {
-            try
-            {
-                using (var conn = new SqlConnection(GenerateConnStr(connectionString)))
-                {
-                    using (var cmd = new SqlCommand("SELECT COUNT(*) from dbo.TBLSTHAR where STOK_KODU = @stockCode", conn))
-                    {
-                        conn.Open();
-                        cmd.Parameters.AddWithValue("@stockCode", stockCode);
-                        int recordCount = (int)cmd.ExecuteScalar();
-                        if (recordCount > 0)
+                        else if (result == 0)
                         {
-                            return true;
+                            notrStocks.Add(new ModelStock { StockCode = stockCode, Amount = x });
                         }
+                        else
+                        {
+                            faultStocks.Add(new ModelStock { StockCode = stockCode, Amount = x });
+                            totalFailed++;
+                        }
+
                     }
-                }
-            }
-            catch (System.Exception ex)
-            {
-                MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
 
-            return false;
-        }
-
-        public int InsertNewStockAmount(string stockCode, int amount)
-        {
-            string query =
-                    @"--Buradan Yeni Miktar Eklemesi Yapılıyor  
-                    -- (-1) stok yok , (0) kayıt eklenmedi, (1) kayıt eklendi
-                    DECLARE @EskiMiktar int;
-                    DECLARE @YeniMiktar int;
-                    DECLARE @Result int;
-                    SELECT @Result = -1;
-                    IF EXISTS (SELECT 1 FROM dbo.TBLSTHAR WHERE [STOK_KODU] =  @stockCode)
-                    BEGIN
-	                    SELECT @YeniMiktar = @newAmount;
-	                    SELECT @EskiMiktar = (Select ISNULL((SELECT Sum(STHAR_GCMIK)
-			                    FROM  dbo.TBLSTHAR
-			                    WHERE [STOK_KODU] = a.Stok_kodu AND STHAR_GCKOD ='G'  Group By STOK_KODU),0) - ISNULL((SELECT Sum(STHAR_GCMIK)
-			                    FROM  dbo.TBLSTHAR
-			                    WHERE [STOK_KODU] = a.Stok_kodu AND STHAR_GCKOD ='C' Group By STOK_KODU),0) as Adet from  dbo.TBLSTHAR as a 
-			                    Where STOK_KODU= @stockCode 
-			                    Group By STOK_KODU);
-
-	                    IF @EskiMiktar <> @YeniMiktar 
-	                    BEGIN
-		                    INSERT INTO TBLSTHAR (STOK_KODU, STHAR_GCMIK, STHAR_GCKOD, STHAR_TARIH, STHAR_HTUR, STHAR_DOVTIP, STHAR_DOVFIAT, SUBE_KODU)
-		                    VALUES ( @stockCode, ABS(@YeniMiktar - @EskiMiktar),
-		                    CASE 
-			                    WHEN @EskiMiktar < @YeniMiktar THEN 'G'
-			                    WHEN @EskiMiktar  > @YeniMiktar THEN 'C' 
-		                    END
-		                    ,@DateTime,'A' ,0 ,0.000000000000000,0);
-	                    END
-	                    SELECT @Result =  @@ROWCOUNT;
-                    END
-
-                    SELECT @Result";
-            try
-            {
-                using (var conn = new SqlConnection(GenerateConnStr(connectionString)))
-                {
-                    using (var cmd = new SqlCommand(query, conn))
+                    this.Dispatcher.Invoke(() =>
                     {
-                        conn.Open();
-                        cmd.Parameters.AddWithValue("@newAmount", amount);
-                        cmd.Parameters.AddWithValue("@DateTime", DateTime.Now);
-                        cmd.Parameters.AddWithValue("@stockCode", stockCode);
-                        int recordCount = (int)cmd.ExecuteScalar();
-
-                        return recordCount;
-
-                    }
+                        dgExcel.ItemsSource = dtStock.DefaultView;
+                    });
                 }
-            }
-            catch (System.Exception ex)
-            {
-                MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
 
-            return -1;
+                this.Dispatcher.Invoke(() =>
+                {
+                    lblProgresRecord.Content = string.Format("{0} Başarılı - {1} Hatalı", totalSuccess, totalFailed);
+                    pbProcess.Visibility = Visibility.Hidden;
+                    btnRefreshStocks_Click(this, null);
+                });
+            });
         }
-
 
         #region Excel
+
+        Microsoft.Office.Interop.Excel.Application excel;
+        Microsoft.Office.Interop.Excel.Workbook workBook;
+        Microsoft.Office.Interop.Excel.Worksheet workSheet;
+        Microsoft.Office.Interop.Excel.Range cellRange;
+        System.Data.DataTable dtStock;
 
         private void btnOpenExcel_Click(object sender, RoutedEventArgs e)
         {
@@ -226,7 +150,7 @@ namespace SNNetsisStokTakip.Views
                     using (var reader = ExcelReaderFactory.CreateReader(stream))
                     {
 
-                        var result = reader.AsDataSet(new ExcelDataSetConfiguration()
+                        var dataSet = reader.AsDataSet(new ExcelDataSetConfiguration()
                         {
                             ConfigureDataTable = (tableReader) => new ExcelDataTableConfiguration()
                             {
@@ -234,11 +158,15 @@ namespace SNNetsisStokTakip.Views
                             }
                         });
 
-                        var tablenames = GetTablenames(result.Tables);
+                        var tablenames = GetTablenames(dataSet.Tables);
 
-                        var columns = result.Tables[0].Columns;
+                        dtStock = dataSet.Tables[0];
+                        var col = dtStock.Columns.Add("Sonuc", typeof(string));
 
-                        dgExcel.ItemsSource = result.Tables[0].DefaultView;
+                        dgExcel.ItemsSource = dtStock.DefaultView;
+
+                        dgExcel.Columns[0].IsReadOnly = true;
+                        dgExcel.Columns[1].IsReadOnly = false;
                     }
                 }
             }
@@ -255,52 +183,6 @@ namespace SNNetsisStokTakip.Views
             return tableList;
         }
 
-        #endregion
-
-        private void btnGetStHarTable_Click(object sender, RoutedEventArgs e)
-        {
-            GetAllStocks();
-        }
-
-        private void cbDbList_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
-        {
-            if (connectionString != null) connectionString.DbName = cbDbList.SelectedItem.ToString();
-        }
-
-        private void btnProcessStart_Click(object sender, RoutedEventArgs e)
-        {
-            for (int i = 0; i < dgExcel.Items.Count; i++)
-            {
-                DataGridRow row = (DataGridRow)dgExcel.ItemContainerGenerator.ContainerFromIndex(i);
-                if (row != null)
-                {
-                    row.Background = new SolidColorBrush(Colors.Azure);
-                    TextBlock cellStockCode = dgExcel.Columns[0].GetCellContent(row) as TextBlock;
-                    TextBlock cellAmount = dgExcel.Columns[1].GetCellContent(row) as TextBlock;
-
-                    int x = 0;
-
-                    Int32.TryParse(cellAmount.Text, out x);
-
-                    lblProgresRecord.Content = cellStockCode.Text;
-                    var result = InsertNewStockAmount(cellStockCode.Text, x);
-                    if (result == 1)
-                    {
-                        row.Background = new SolidColorBrush(Colors.LightSeaGreen);
-                    }
-                    else if (result == 0)
-                    {
-                        row.Background = new SolidColorBrush(Colors.Lavender);
-                    }
-                    else
-                    {
-                        row.Background = new SolidColorBrush(Colors.DarkRed);
-                        row.Foreground = new SolidColorBrush(Colors.White);
-                    }
-                }
-            }
-        }
-
         private void btnToCsv_Click(object sender, RoutedEventArgs e)
         {
             ExportToExcelAndCsv();
@@ -308,9 +190,9 @@ namespace SNNetsisStokTakip.Views
 
         private void ExportToExcelAndCsv()
         {
-            DataTable dt = new DataTable();
+            System.Data.DataTable dt = new System.Data.DataTable();
             dt = ((DataView)dgDb.ItemsSource).ToTable();
-           
+
             SaveFileDialog saveFileDialog = new SaveFileDialog();
             saveFileDialog.Filter = "excel (*.xlsx)|*.xlsx";
             if (saveFileDialog.ShowDialog() == true)
@@ -322,12 +204,7 @@ namespace SNNetsisStokTakip.Views
             }
         }
 
-        Microsoft.Office.Interop.Excel.Application excel;
-        Microsoft.Office.Interop.Excel.Workbook workBook;
-        Microsoft.Office.Interop.Excel.Worksheet workSheet;
-        Microsoft.Office.Interop.Excel.Range cellRange;
-
-        private void GenerateExcel(DataTable DtIN)
+        private void GenerateExcel(System.Data.DataTable DtIN)
         {
             try
             {
@@ -338,7 +215,7 @@ namespace SNNetsisStokTakip.Views
                 workSheet = (Microsoft.Office.Interop.Excel.Worksheet)workBook.ActiveSheet;
                 workSheet.Name = "NetsisStokListesi";
                 System.Data.DataTable tempDt = DtIN;
-                dgExcel.ItemsSource = tempDt.DefaultView;
+                //dgExcel.ItemsSource = tempDt.DefaultView;
                 workSheet.Cells.Font.Size = 11;
                 int rowcount = 1;
                 for (int i = 1; i <= tempDt.Columns.Count; i++) //taking care of Headers.  
@@ -362,37 +239,108 @@ namespace SNNetsisStokTakip.Views
             }
         }
 
-        //public static DataTable ToDataTable<T>(this IList<T> data)
-        //{
-        //    PropertyDescriptorCollection properties = TypeDescriptor.GetProperties(typeof(T));
-        //    DataTable dt = new DataTable();
-        //    foreach (PropertyDescriptor prop in properties)
-        //    {
-        //        dt.Columns.Add(prop.Name, Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType);
-        //    }
-        //    foreach (T item in data)
-        //    {
-        //        DataRow row = dt.NewRow();
-        //        foreach (PropertyDescriptor pdt in properties)
-        //        {
-        //            row[pdt.Name] = pdt.GetValue(item) ?? DBNull.Value;
-        //        }
-        //        dt.Rows.Add(row);
-        //    }
-        //    return dt;
-        //}
+
+        #endregion
+
+        bool back = false;
+        private void btnBack_Click(object sender, RoutedEventArgs e)
+        {
+            back = true;
+            this.Close();
+        }
+
+        private void MainWindow_Closed(object sender, EventArgs e)
+        {
+            if (!back)
+                ((SqlLogin)System.Windows.Application.Current.MainWindow).Close();
+            else
+                ((SqlLogin)System.Windows.Application.Current.MainWindow).Visibility = Visibility.Visible;
+        }
+
+        private void txtFilter_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            DgStockFilter(txtFilter.Text);
+        }
+
+        private void btnRefreshStocks_Click(object sender, RoutedEventArgs e)
+        {
+            var ex = ExceptionHelper.CatchException(() =>
+            {
+                ConnectionManagement.StocksTable = ConnectionManagement.SqlOperations.GetAllStocks();
+                dgDb.ItemsSource = ConnectionManagement.StocksTable;
+                dgDb.Columns[0].IsReadOnly = true;
+                DgStockFilter(txtFilter.Text);
+                Snackbar.MessageQueue.Enqueue("Stoklar Yeniden Yüklendi");
+            });
+
+            if (ex != null)
+            {
+                _ = MessageBox.Show(ex.Message, "Server Hatası");
+            }
+
+        }
+
+        private void btnSave_Click(object sender, RoutedEventArgs e)
+        {
+            int parsedValue;
+            if (!int.TryParse(txtAmount.Text, out parsedValue))
+            {
+                Snackbar.MessageQueue.Enqueue("Adet Değeri Sayı Olmalı");
+                return;
+            }
+            else
+            {
+                var result = ConnectionManagement.SqlOperations.InsertNewStockAmount(tbStockCode.Text, parsedValue);
+                if (result == 1)
+                {
+                    Snackbar.MessageQueue.Enqueue("Stok Güncellendi");
+                    tbAmount.Text = ConnectionManagement.SqlOperations.GetStock(tbStockCode.Text)[0]["Adet"].ToString().Split('.')[0].ToString();
+                    DataRowView rowView = (DataRowView)dgDb.SelectedItem;
+                    rowView.Row["Adet"] = tbAmount.Text;
+                }
+
+                else if (result == 0)
+                {
+                    Snackbar.MessageQueue.Enqueue("Stok Değeri Zaten Tanımlı");
+                }
+                else
+                {
+                    Snackbar.MessageQueue.Enqueue("Stok Bulunamadı");
+                }
+            }
+
+
+        }
+
+        private void btnSuccess_Click(object sender, RoutedEventArgs e)
+        {
+            if (successStocks != null)
+                dgExcel.ItemsSource = successStocks;
+
+        }
+
+        private void btnFault_Click(object sender, RoutedEventArgs e)
+        {
+            if (faultStocks != null)
+                dgExcel.ItemsSource = faultStocks;
+        }
+
+        private void btnOrginal_Click(object sender, RoutedEventArgs e)
+        {
+            if (dtStock != null)
+                dgExcel.ItemsSource = dtStock.DefaultView;
+        }
+
+        private void dgDb_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            object item = dgDb.SelectedItem;
+            if (item != null)
+            {
+                tbStockCode.Text = (dgDb.SelectedCells[0].Column.GetCellContent(item) as TextBlock).Text;
+                txtAmount.Text = tbAmount.Text = (dgDb.SelectedCells[1].Column.GetCellContent(item) as TextBlock).Text.Split('.')[0].ToString();
+            }
+        }
     }
 
-
-
-    public class ModelConnStr
-    {
-        public string Server { get; set; }
-        public string User { get; set; }
-        public string Pass { get; set; }
-        public string DbName { get; set; }
-
-
-    }
 
 }

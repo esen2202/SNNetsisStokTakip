@@ -3,69 +3,206 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         xmlns:local="clr-namespace:SNNetsisStokTakip"
         mc:Ignorable="d"
-        Title="MainWindow" Height="495.938" Width="1020.312">
-    <Grid>
-        <ComboBox IsEditable="True"
-                  Width="200"
-                  IsTextSearchEnabled="False"
-                  x:Name="cb"
-                  PreviewTextInput="Cb_OnPreviewTextInput"
-                  ItemsSource="{Binding ItemList}"
-                  Text="{Binding SearchTextText}" Margin="224,10,0,0" HorizontalAlignment="Left" Height="32" VerticalAlignment="Top">
-            <ComboBox.ItemsPanel>
-                <ItemsPanelTemplate>
-                    <VirtualizingStackPanel />
-                </ItemsPanelTemplate>
-            </ComboBox.ItemsPanel>
-        </ComboBox>
+        Title="Netsis Stok Entegre" Height="765" Width="1316.561"
+        Name="_this"
+        Loaded="MainWindow_Loaded" Closed="MainWindow_Closed" Icon="/SNNetsisStokTakip;component/Assets/images/icons/stock.ico" >
 
-        <Button Name="btnOpenExcel"  Content="Open Excel Stok List" 
-                HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="200" Height="32"
-                Click="btnOpenExcel_Click"/>
-        <DataGrid Name="dgExcel" 
-                  HorizontalAlignment="Left" Height="408" Margin="10,47,0,0" VerticalAlignment="Top" Width="414"
-                    CanUserAddRows="False"  CanUserDeleteRows="False" CanUserSortColumns="False" />
-        <TextBox 
-            x:Name="txtServer"
-            HorizontalAlignment="Left" Height="34" Margin="521,14,0,0" TextWrapping="Wrap" Text="EOPYNETSRV" VerticalAlignment="Top" Width="164"/>
-        <Label Content="Server" HorizontalAlignment="Left" Margin="467,24,0,0" VerticalAlignment="Top"/>
-        <TextBox 
-            x:Name="txtUser"
-            HorizontalAlignment="Left" Height="34" Margin="521,53,0,0" TextWrapping="Wrap" Text="sa" VerticalAlignment="Top" Width="164"/>
-        <Label Content="User" HorizontalAlignment="Left" Margin="467,63,0,0" VerticalAlignment="Top"/>
-        <TextBox 
-            x:Name="txtPass"
-            HorizontalAlignment="Left" Height="34" Margin="521,92,0,0" TextWrapping="Wrap" Text="Aspendos1" VerticalAlignment="Top" Width="164"/>
-        <Label Content="Pass" HorizontalAlignment="Left" Margin="467,102,0,0" VerticalAlignment="Top"/>
-        <Button x:Name="btnConnect"  Content="Connect Netsis" 
-            HorizontalAlignment="Left" Margin="540,151,0,0" VerticalAlignment="Top" Width="127" Height="32"
-            Click="btnConnect_Click"/>
-        <DataGrid x:Name="dgDb" 
-            HorizontalAlignment="Left" Height="251" Margin="447,204,0,0" VerticalAlignment="Top" Width="555"
-              CanUserAddRows="False"  CanUserDeleteRows="False" CanUserSortColumns="False" />
-        <ComboBox Name="cbDbList"
-            Width="200"
-            IsTextSearchEnabled="False"
-            PreviewTextInput="Cb_OnPreviewTextInput"
-            SelectionChanged="cbDbList_SelectionChanged"
-            Margin="682,151,0,0" HorizontalAlignment="Left" Height="32" VerticalAlignment="Top">
-            <ComboBox.ItemsPanel>
-                <ItemsPanelTemplate>
-                    <VirtualizingStackPanel />
-                </ItemsPanelTemplate>
-            </ComboBox.ItemsPanel>
-        </ComboBox>
-        <Button x:Name="btnGetStHarTable"  Content="Get Stocks" 
-            HorizontalAlignment="Left" Margin="755,188,0,0" VerticalAlignment="Top" Width="127" Height="32"
-            Click="btnGetStHarTable_Click"/>
-        <Button x:Name="btnProcessStart"  Content="Get Stocks" 
-            HorizontalAlignment="Left" Margin="285,423,0,0" VerticalAlignment="Top" Width="127" Height="32"
-            Click="btnProcessStart_Click"/>
-        <Label Name="lblProgresRecord" Content="Server" HorizontalAlignment="Left" Margin="10,427,0,0" VerticalAlignment="Top" Width="260" Background="#FFC8FFE8"/>
-        <Button x:Name="btnToCsv"  Content="Save XLS" 
-            HorizontalAlignment="Left" Margin="875,423,0,0" VerticalAlignment="Top" Width="127" Height="32"
-            Click="btnToCsv_Click"/>
+    <Grid x:Name="gMain">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="60"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="50"/>
+        </Grid.RowDefinitions>
+
+
+        <Border Background="AliceBlue" Margin="0" Grid.Row="0"
+                    Effect="{StaticResource MaterialDesignShadowDepth1}">
+
+            <StackPanel Orientation="Horizontal" >
+
+                <Button x:Name="btnBack"  Content="Geri" 
+                        Margin="10" Width="57" Height="32"       
+                        HorizontalAlignment="Left" VerticalAlignment="Top" 
+                        Style="{StaticResource MaterialDesignFlatLightBgButton}"
+                        Click="btnBack_Click"/>
+
+                <Button x:Name="btnRefreshStocks"  Content="Stok Bilgilerini Yenile"  
+                        Margin="10" Width="200" Height="32"
+                        HorizontalAlignment="Left" VerticalAlignment="Top" 
+                        Style="{StaticResource MaterialDesignFlatDarkBgButton}"
+                        Click="btnRefreshStocks_Click"/>
+                <Button x:Name="btnOpenExcel"  Content="Excel Stok Listesi Aç"  
+                        Margin="10,10,10,0" Width="200" Height="32"
+                        HorizontalAlignment="Left" VerticalAlignment="Top" 
+                        Style="{StaticResource MaterialDesignFlatDarkBgButton}"
+                        Click="btnOpenExcel_Click"/>
+
+            </StackPanel>
+        </Border>
+
+        <Grid x:Name="gContent" Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="auto"/>
+                <ColumnDefinition Width="330"/>
+                <ColumnDefinition Width="auto"/>
+            </Grid.ColumnDefinitions>
+
+            <Grid x:Name="gLeftContent" Grid.Column="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="60"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <DockPanel
+                            Grid.Row="0">
+
+                    <TextBox 
+                        Name="txtFilter" 
+                        Width="200" Margin="5"
+                        materialDesign:HintAssist.Hint="Search"
+                        materialDesign:HintAssist.Foreground="Green"
+                        materialDesign:TextFieldAssist.UnderlineBrush="Green"
+                        Style="{StaticResource MaterialDesignFloatingHintTextBox}"
+                        TextChanged="txtFilter_TextChanged"/>
+
+                    <Button x:Name="btnToCsv"  Content="Excel Olarak Kaydet"
+                        HorizontalAlignment="Right" VerticalAlignment="Top"
+                        Width="168" Height="42" Margin="5,5,5,0"
+                        Style="{StaticResource MaterialDesignFlatAccentBgButton}"
+                            Effect="{StaticResource MaterialDesignShadowDepth1}"
+                        Click="btnToCsv_Click"/>
+
+                </DockPanel>
+
+                <DataGrid x:Name="dgDb" Grid.Row="1"
+                          HorizontalAlignment="Left" Width="472" Margin="5"
+                          CanUserAddRows="False"  CanUserDeleteRows="False"
+                          Effect="{StaticResource MaterialDesignShadowDepth1}"
+                          SelectionChanged="dgDb_SelectionChanged">
+                </DataGrid>
+            </Grid>
+
+            <Grid x:Name="gDetailContent" Grid.Column="1" Height="auto">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <Border Background="WhiteSmoke"
+                        Grid.Row="0"
+                    Margin="10 20"
+                    CornerRadius="5"
+                    Effect="{StaticResource MaterialDesignShadowDepth1}">
+
+                    <StackPanel Orientation="Vertical">
+                        <Border Background="SeaShell" CornerRadius="5" Margin="3" HorizontalAlignment="Center" Effect="{StaticResource MaterialDesignShadowDepth1}">
+                            <TextBlock Margin="10 0" Style="{StaticResource MaterialDesignSubtitle2TextBlock}" Foreground="Chocolate" FontWeight="Regular" > Stok Kartı</TextBlock>
+                        </Border>
+
+                        <WrapPanel Height="50" Margin=" 15 5">
+                            <TextBlock Name="tbStockCode" Text="-" Margin="0 0 15 0" Foreground="DarkViolet" FontWeight="DemiBold"
+                           Style="{StaticResource MaterialDesignSubtitle1TextBlock}"/>
+                            <TextBlock Name="tbAmount" Text="-" Margin="0 0 15 0"  Foreground="DodgerBlue" FontWeight="Medium"
+                                       HorizontalAlignment="Right"
+                           Style="{StaticResource MaterialDesignSubtitle1TextBlock}"/>
+
+                        </WrapPanel>
+
+                        <DockPanel>
+
+                            <TextBox 
+                                Name="txtAmount"
+                                Margin="15 15"
+                                FontSize="16" Width="100"
+                                materialDesign:HintAssist.Hint="Yeni Adet"
+                                materialDesign:HintAssist.Foreground="Green"
+                                materialDesign:TextFieldAssist.UnderlineBrush="Green"
+                                Style="{StaticResource MaterialDesignFloatingHintTextBox}"/>
+
+                            <Button x:Name="btnSave"  Content="Kaydet" 
+                                Width="100" Height="35" Margin="15 15 15 0"
+                                HorizontalAlignment="Right" VerticalAlignment="Center" 
+                                Click="btnSave_Click"/>
+
+                        </DockPanel>
+
+                    </StackPanel>
+                </Border>
+
+                <Border Background="WhiteSmoke"
+                        Grid.Row="1"
+                    Margin="10 20"
+                    CornerRadius="5"
+                    Effect="{StaticResource MaterialDesignShadowDepth1}">
+
+                    <StackPanel Orientation="Vertical">
+                        <Border Background="SeaShell" CornerRadius="5" Margin="3" HorizontalAlignment="Center" Effect="{StaticResource MaterialDesignShadowDepth1}">
+                            <TextBlock Margin="10 0" Style="{StaticResource MaterialDesignSubtitle2TextBlock}" Foreground="Chocolate" FontWeight="Regular" > Excel İşlem Sonuçları</TextBlock>
+                        </Border>
+
+
+                        <StackPanel>
+
+                            <Button x:Name="btnOrginal"  Content="Excel Tüm Kayıtlar" 
+                                Width="152" Height="35" Margin="15 15 15 0"
+                                HorizontalAlignment="Right" VerticalAlignment="Center" 
+                                     Style="{StaticResource MaterialDesignOutlinedButton}"
+                                Click="btnOrginal_Click"/>
+                            
+                            <Button x:Name="btnFault"  Content="Başarısız Sonuçlar" 
+                                Width="152" Height="35" Margin="15 15 15 0"
+                                HorizontalAlignment="Right" VerticalAlignment="Center" 
+                                     Style="{StaticResource MaterialDesignOutlinedButton}"
+                                Click="btnFault_Click"/>
+
+                            <Button x:Name="btnSuccess"  Content="Başarılı  Sonuçlar" 
+                                Width="152" Height="35" Margin="0,15,15,0"
+                                HorizontalAlignment="Right" VerticalAlignment="Center" 
+                                    Style="{StaticResource MaterialDesignOutlinedButton}"
+                                Click="btnSuccess_Click"/>
+
+                        </StackPanel>
+
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <Grid x:Name="gRightContent" Grid.Column="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="60"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <DataGrid Name="dgExcel" Grid.Row="1"
+                        HorizontalAlignment="Left" Width="472" Margin="5"
+                        CanUserAddRows="False"  CanUserDeleteRows="False" CanUserSortColumns="False" 
+                        Effect="{StaticResource MaterialDesignShadowDepth1}">
+                </DataGrid>
+
+                <DockPanel Grid.Row="0">
+                    <StackPanel>
+                        <Label Name="lblProgresRecord" Content="Stok KoduN" 
+                       HorizontalAlignment="Left" VerticalAlignment="Top" 
+                       Width="260"  Margin="5"
+                       Background="#FFC8EDFF"
+                       Effect="{StaticResource MaterialDesignShadowDepth1}"/>
+                        <ProgressBar x:Name="pbProcess" Height="13" Margin="5" IsIndeterminate="True"></ProgressBar>
+                    </StackPanel>
+                    <Button x:Name="btnProcessStart"  Content="Excel'i Netsis'e İşle" 
+                         Width="168" Height="42" Margin="5,5,5,0"
+                        HorizontalAlignment="Left" VerticalAlignment="Top" 
+                        Click="btnProcessStart_Click"/>
+
+                </DockPanel>
+            </Grid>
+
+        </Grid>
+
+        <materialDesign:Snackbar MessageQueue="{materialDesign:MessageQueue}"
+                                     x:Name="MainSnackbar"
+                                     Grid.Row="2" />
+        <!--gContent-->
     </Grid>
+    <!--gMain-->
 </Window>
