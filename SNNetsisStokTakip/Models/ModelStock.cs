@@ -10,5 +10,6 @@ namespace SNNetsisStokTakip.Models
     {
         public string StockCode { get; set; }
         public double Amount { get; set; }
+        public string Status { get; set; }
     }
 }

@@ -66,11 +66,20 @@ namespace SNNetsisStokTakip.Views
 
         private async void btnProcessStart_Click(object sender, RoutedEventArgs e)
         {
-            pbProcess.Visibility = Visibility.Visible;
-            successStocks.Clear();
-            faultStocks.Clear();
-            notrStocks.Clear();
-            await ProcessThread();
+            if (dtStock != null)
+            {
+                dgExcel.ItemsSource = dtStock.DefaultView;
+                //tbRecordType.Text = "";
+            }
+
+            if (MessageBox.Show("Stok Miktarları Excel'den Netsis'e Güncellesin mi?", "Netsis Stok Güncelle", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
+            {
+                pbProcess.Visibility = Visibility.Visible;
+                successStocks.Clear();
+                faultStocks.Clear();
+                notrStocks.Clear();
+                await ProcessThread();
+            }
         }
 
         int totalSuccess, totalFailed;
@@ -100,15 +109,15 @@ namespace SNNetsisStokTakip.Views
                         if (result == 1)
                         {
                             totalSuccess++;
-                            successStocks.Add(new ModelStock { StockCode = stockCode, Amount = x });
+                            successStocks.Add(new ModelStock { StockCode = stockCode, Amount = x, Status = "İşlendi" });
                         }
                         else if (result == 0)
                         {
-                            notrStocks.Add(new ModelStock { StockCode = stockCode, Amount = x });
+                            notrStocks.Add(new ModelStock { StockCode = stockCode, Amount = x, Status = "İşlenmedi" });
                         }
                         else
                         {
-                            faultStocks.Add(new ModelStock { StockCode = stockCode, Amount = x });
+                            faultStocks.Add(new ModelStock { StockCode = stockCode, Amount = x, Status = "Başarısız" });
                             totalFailed++;
                         }
 
@@ -122,9 +131,10 @@ namespace SNNetsisStokTakip.Views
 
                 this.Dispatcher.Invoke(() =>
                 {
-                    lblProgresRecord.Content = string.Format("{0} Başarılı - {1} Hatalı", totalSuccess, totalFailed);
-                    pbProcess.Visibility = Visibility.Hidden;
+                    lblProgresRecord.Content = string.Format("{0} Başarılı - {1} Başarısız", totalSuccess, totalFailed);
+                    pbProcess.Visibility = Visibility.Collapsed;
                     btnRefreshStocks_Click(this, null);
+                    ShowProcessNumbers();
                 });
             });
         }
@@ -167,9 +177,18 @@ namespace SNNetsisStokTakip.Views
 
                         dgExcel.Columns[0].IsReadOnly = true;
                         dgExcel.Columns[1].IsReadOnly = false;
+
+                        ShowProcessNumbers();
                     }
                 }
             }
+        }
+
+        private void ShowProcessNumbers()
+        {
+            txtAllNumber.Text = string.Format("{0}", dtStock.DefaultView.Count);
+            txtSuccessNumber.Text = string.Format("{0}", totalSuccess);
+            txtFailedNumber.Text = string.Format("{0}", totalFailed);
         }
 
         private static IList<string> GetTablenames(DataTableCollection tables)
@@ -271,6 +290,8 @@ namespace SNNetsisStokTakip.Views
                 dgDb.Columns[0].IsReadOnly = true;
                 DgStockFilter(txtFilter.Text);
                 Snackbar.MessageQueue.Enqueue("Stoklar Yeniden Yüklendi");
+                tbStockCode.Text = "-";
+                txtAmount.Text = tbAmount.Text = "-";
             });
 
             if (ex != null)
@@ -295,6 +316,7 @@ namespace SNNetsisStokTakip.Views
                 {
                     Snackbar.MessageQueue.Enqueue("Stok Güncellendi");
                     tbAmount.Text = ConnectionManagement.SqlOperations.GetStock(tbStockCode.Text)[0]["Adet"].ToString().Split('.')[0].ToString();
+
                     DataRowView rowView = (DataRowView)dgDb.SelectedItem;
                     rowView.Row["Adet"] = tbAmount.Text;
                 }
@@ -315,20 +337,30 @@ namespace SNNetsisStokTakip.Views
         private void btnSuccess_Click(object sender, RoutedEventArgs e)
         {
             if (successStocks != null)
+            {
                 dgExcel.ItemsSource = successStocks;
+                //tbRecordType.Text = string.Format("İşlenen Kayıtlar ({0})", totalSuccess);
+            }
+
 
         }
 
         private void btnFault_Click(object sender, RoutedEventArgs e)
         {
             if (faultStocks != null)
+            {
                 dgExcel.ItemsSource = faultStocks;
+                //tbRecordType.Text = string.Format("Başarısız Kayıtlar ({0})", totalFailed);
+            }
         }
 
         private void btnOrginal_Click(object sender, RoutedEventArgs e)
         {
             if (dtStock != null)
+            {
                 dgExcel.ItemsSource = dtStock.DefaultView;
+                //tbRecordType.Text = "";
+            }
         }
 
         private void dgDb_SelectionChanged(object sender, SelectionChangedEventArgs e)

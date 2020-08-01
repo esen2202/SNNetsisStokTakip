@@ -23,22 +23,43 @@
 
             <StackPanel Orientation="Horizontal" >
 
-                <Button x:Name="btnBack"  Content="Geri" 
+                <Button x:Name="btnBack"  
                         Margin="10" Width="57" Height="32"       
                         HorizontalAlignment="Left" VerticalAlignment="Top" 
                         Style="{StaticResource MaterialDesignFlatLightBgButton}"
-                        Click="btnBack_Click"/>
+                        Click="btnBack_Click">
+                    <Button.Content>
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="ArrowBack" Foreground="Indigo" Width="25" Height="25"/>
+                        </StackPanel>
+                    </Button.Content>
+                </Button>
 
-                <Button x:Name="btnRefreshStocks"  Content="Stok Bilgilerini Yenile"  
+                <Button x:Name="btnRefreshStocks"  
                         Margin="10" Width="200" Height="32"
                         HorizontalAlignment="Left" VerticalAlignment="Top" 
                         Style="{StaticResource MaterialDesignFlatDarkBgButton}"
-                        Click="btnRefreshStocks_Click"/>
-                <Button x:Name="btnOpenExcel"  Content="Excel Stok Listesi Aç"  
+                        Click="btnRefreshStocks_Click">
+                    <Button.Content>
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="DatabaseRefresh" Foreground="LightSkyBlue" />
+                            <TextBlock Text="Stok Bilgilerini Yenile" Style="{StaticResource MaterialDesignButtonTextBlock}" Margin="4 0 0 0"/>
+                        </StackPanel>
+                    </Button.Content>
+                </Button>
+                <Button x:Name="btnOpenExcel"  
                         Margin="10,10,10,0" Width="200" Height="32"
                         HorizontalAlignment="Left" VerticalAlignment="Top" 
                         Style="{StaticResource MaterialDesignFlatDarkBgButton}"
-                        Click="btnOpenExcel_Click"/>
+                        Click="btnOpenExcel_Click">
+                    <Button.Content>
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="FileExcel" Foreground="LightSeaGreen" />
+                            <TextBlock Text="Excel Stok Listesi Yükle" Style="{StaticResource MaterialDesignButtonTextBlock}" Margin="4 0 0 0"/>
+                        </StackPanel>
+                    </Button.Content>
+
+                </Button>
 
             </StackPanel>
         </Border>
@@ -67,12 +88,20 @@
                         Style="{StaticResource MaterialDesignFloatingHintTextBox}"
                         TextChanged="txtFilter_TextChanged"/>
 
-                    <Button x:Name="btnToCsv"  Content="Excel Olarak Kaydet"
+                    <Button x:Name="btnToCsv" 
                         HorizontalAlignment="Right" VerticalAlignment="Top"
-                        Width="168" Height="42" Margin="5,5,5,0"
+                        Width="201" Height="42" Margin="5,5,5,0"
                         Style="{StaticResource MaterialDesignFlatAccentBgButton}"
                             Effect="{StaticResource MaterialDesignShadowDepth1}"
-                        Click="btnToCsv_Click"/>
+                        Click="btnToCsv_Click">
+                        <Button.Content>
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="DatabaseExport" Foreground="LightSeaGreen" Height="25" Width="25" VerticalAlignment="Center" />
+                                <materialDesign:PackIcon Kind="FileExcelBoxOutline" Foreground="LightSeaGreen" VerticalAlignment="Center"/>
+                                <TextBlock Text="Excel Olarak Kaydet" Style="{StaticResource MaterialDesignButtonTextBlock}"  VerticalAlignment="Center" Margin="4 0 0 0"/>
+                            </StackPanel>
+                        </Button.Content>
+                    </Button>
 
                 </DockPanel>
 
@@ -97,7 +126,10 @@
 
                     <StackPanel Orientation="Vertical">
                         <Border Background="SeaShell" CornerRadius="5" Margin="3" HorizontalAlignment="Center" Effect="{StaticResource MaterialDesignShadowDepth1}">
-                            <TextBlock Margin="10 0" Style="{StaticResource MaterialDesignSubtitle2TextBlock}" Foreground="Chocolate" FontWeight="Regular" > Stok Kartı</TextBlock>
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="TicketConfirmation" Foreground="MediumOrchid" VerticalAlignment="Center"/>
+                                <TextBlock Margin="10 0" Style="{StaticResource MaterialDesignSubtitle2TextBlock}" Foreground="Chocolate" FontWeight="Regular" > Stok Kartı</TextBlock>
+                            </StackPanel>
                         </Border>
 
                         <WrapPanel Height="50" Margin=" 15 5">
@@ -120,10 +152,17 @@
                                 materialDesign:TextFieldAssist.UnderlineBrush="Green"
                                 Style="{StaticResource MaterialDesignFloatingHintTextBox}"/>
 
-                            <Button x:Name="btnSave"  Content="Kaydet" 
+                            <Button x:Name="btnSave"   
                                 Width="100" Height="35" Margin="15 15 15 0"
                                 HorizontalAlignment="Right" VerticalAlignment="Center" 
-                                Click="btnSave_Click"/>
+                                Click="btnSave_Click">
+                                <Button.Content>
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialDesign:PackIcon Kind="DatabaseSync" Foreground="LightSeaGreen" />
+                                        <TextBlock Text="İşle" Style="{StaticResource MaterialDesignButtonTextBlock}" Margin="4 0 0 0"/>
+                                    </StackPanel>
+                                </Button.Content>
+                            </Button>
 
                         </DockPanel>
 
@@ -138,29 +177,59 @@
 
                     <StackPanel Orientation="Vertical">
                         <Border Background="SeaShell" CornerRadius="5" Margin="3" HorizontalAlignment="Center" Effect="{StaticResource MaterialDesignShadowDepth1}">
-                            <TextBlock Margin="10 0" Style="{StaticResource MaterialDesignSubtitle2TextBlock}" Foreground="Chocolate" FontWeight="Regular" > Excel İşlem Sonuçları</TextBlock>
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="MicrosoftExcel" Foreground="SeaGreen" VerticalAlignment="Center"/>
+                                <TextBlock Margin="10 0" Style="{StaticResource MaterialDesignSubtitle2TextBlock}" Foreground="Chocolate" FontWeight="Regular" > Excel İşlem Sonuçları</TextBlock>
+                            </StackPanel>
                         </Border>
 
 
                         <StackPanel>
 
-                            <Button x:Name="btnOrginal"  Content="Excel Tüm Kayıtlar" 
-                                Width="152" Height="35" Margin="15 15 15 0"
+                            <Button x:Name="btnOrginal"
+                                Height="35" Margin="15 15 15 0"
                                 HorizontalAlignment="Right" VerticalAlignment="Center" 
                                      Style="{StaticResource MaterialDesignOutlinedButton}"
-                                Click="btnOrginal_Click"/>
-                            
-                            <Button x:Name="btnFault"  Content="Başarısız Sonuçlar" 
-                                Width="152" Height="35" Margin="15 15 15 0"
-                                HorizontalAlignment="Right" VerticalAlignment="Center" 
-                                     Style="{StaticResource MaterialDesignOutlinedButton}"
-                                Click="btnFault_Click"/>
+                                Click="btnOrginal_Click">
+                                <Button.Content>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Margin="10 0 10 0" Style="{StaticResource MaterialDesignButtonTextBlock}" VerticalAlignment="Center">Excel Tüm Kayıtlar</TextBlock>
+                                        <Border CornerRadius="8" Background="Red">
+                                            <TextBlock Name="txtAllNumber" Margin="5" Foreground="White"  VerticalAlignment="Center">0</TextBlock>
+                                        </Border>
+                                    </StackPanel>
+                                </Button.Content>
+                            </Button>
 
-                            <Button x:Name="btnSuccess"  Content="Başarılı  Sonuçlar" 
-                                Width="152" Height="35" Margin="0,15,15,0"
+                            <Button x:Name="btnFault" 
+                                Height="35" Margin="15 15 15 0"
+                                HorizontalAlignment="Right" VerticalAlignment="Center" 
+                                     Style="{StaticResource MaterialDesignOutlinedButton}"
+                                Click="btnFault_Click">
+                                <Button.Content>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Margin="10 0 10 0" Style="{StaticResource MaterialDesignButtonTextBlock}" VerticalAlignment="Center">Başarısız Kayıtlar</TextBlock>
+                                        <Border CornerRadius="8" Background="Red">
+                                            <TextBlock Name="txtFailedNumber" Margin="5" Foreground="White"  VerticalAlignment="Center">0</TextBlock>
+                                        </Border>
+                                    </StackPanel>
+                                </Button.Content>
+                            </Button>
+
+                            <Button x:Name="btnSuccess"   
+                                Height="35" Margin="0,15,15,0"
                                 HorizontalAlignment="Right" VerticalAlignment="Center" 
                                     Style="{StaticResource MaterialDesignOutlinedButton}"
-                                Click="btnSuccess_Click"/>
+                                Click="btnSuccess_Click">
+                                <Button.Content>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Margin="10 0 10 0" Style="{StaticResource MaterialDesignButtonTextBlock}" VerticalAlignment="Center">İşlenen Kayıtlar</TextBlock>
+                                        <Border CornerRadius="8" Background="Red">
+                                            <TextBlock Name="txtSuccessNumber" Margin="5" Foreground="White"  VerticalAlignment="Center">0</TextBlock>
+                                        </Border>
+                                    </StackPanel>
+                                </Button.Content>
+                            </Button>
 
                         </StackPanel>
 
@@ -182,17 +251,28 @@
 
                 <DockPanel Grid.Row="0">
                     <StackPanel>
+
                         <Label Name="lblProgresRecord" Content="Stok KoduN" 
                        HorizontalAlignment="Left" VerticalAlignment="Top" 
                        Width="260"  Margin="5"
                        Background="#FFC8EDFF"
                        Effect="{StaticResource MaterialDesignShadowDepth1}"/>
-                        <ProgressBar x:Name="pbProcess" Height="13" Margin="5" IsIndeterminate="True"></ProgressBar>
+
+                        <ProgressBar x:Name="pbProcess" Height="13" Margin="5" IsIndeterminate="True" />
+
                     </StackPanel>
-                    <Button x:Name="btnProcessStart"  Content="Excel'i Netsis'e İşle" 
-                         Width="168" Height="42" Margin="5,5,5,0"
+                    <Button x:Name="btnProcessStart"  
+                         Width="202" Height="42" Margin="5,5,5,0"
                         HorizontalAlignment="Left" VerticalAlignment="Top" 
-                        Click="btnProcessStart_Click"/>
+                            Style="{StaticResource MaterialDesignFlatAccentBgButton}"
+                            Effect="{StaticResource MaterialDesignShadowDepth1}"
+                        Click="btnProcessStart_Click">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="FileExcelBoxOutline" Foreground="LightSeaGreen" VerticalAlignment="Center"/>
+                            <materialDesign:PackIcon Kind="DatabaseImport" Foreground="LightSeaGreen" Height="25" Width="25" />
+                            <TextBlock Margin="10 0" Style="{StaticResource MaterialDesignButtonTextBlock}" FontWeight="Regular" VerticalAlignment="Center"> Excel'i Netsis'e İşle</TextBlock>
+                        </StackPanel>
+                    </Button>
 
                 </DockPanel>
             </Grid>
