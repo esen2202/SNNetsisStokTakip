@@ -53,12 +53,18 @@ namespace SNNetsisStokTakip.Classes
 
         public DataView GetAllStocks()
         {
-            var dt = GetRecords(@"Select STOK_KODU,ISNULL((SELECT Sum(STHAR_GCMIK)
-                                FROM  dbo.TBLSTHAR
-                                WHERE[STOK_KODU] = a.STOK_KODU AND STHAR_GCKOD = 'G'  Group By STOK_KODU),0) -ISNULL((SELECT Sum(STHAR_GCMIK)
-                                FROM  dbo.TBLSTHAR
-                                WHERE[STOK_KODU] = a.STOK_KODU AND STHAR_GCKOD = 'C' Group By STOK_KODU),0) as Adet from dbo.TBLSTHAR as a
-                                Group By STOK_KODU");
+            var dt = GetRecords(@"Select Calc.STOK_KODU,Calc.ADET,STOK_ADI as Açıklama from  dbo.TBLSTSABIT  INNER JOIN 
+	                                (Select STOK_KODU,ISNULL((SELECT Sum(STHAR_GCMIK) as ADET
+	                                FROM  dbo.TBLSTHAR 
+	                                WHERE [STOK_KODU] = newTable.Stok_kodu AND STHAR_GCKOD ='G'  Group By STOK_KODU),0) - ISNULL((SELECT Sum(STHAR_GCMIK)
+	                                FROM  dbo.TBLSTHAR
+	                                WHERE [STOK_KODU] = newTable.Stok_kodu AND STHAR_GCKOD ='C' Group By STOK_KODU),0) as ADET FROM  
+	                                (Select st.STOK_KODU, st.STOK_ADI,st.SATIS_FIAT1,st.ALIS_DOV_TIP,st.SAT_DOV_TIP,
+	                                sth.STHAR_GCMIK,sth.STHAR_GCKOD,sth.STHAR_TARIH, sth.STHAR_HTUR, sth.STHAR_DOVTIP, sth.STHAR_DOVFIAT, sth.SUBE_KODU  
+	                                from [dbo].[TBLSTSABIT] as st Left Join [dbo].TBLSTHAR as sth on st.STOK_KODU = sth.STOK_KODU) as newTable
+	                                --Where STOK_KODU='EopyTest2'
+	                                Group By STOK_KODU) as Calc
+                                    ON dbo.TBLSTSABIT.STOK_KODU = Calc.STOK_KODU ORDER BY STOK_KODU;");
 
             if (dt != null)
                 return dt.DefaultView;
@@ -68,13 +74,18 @@ namespace SNNetsisStokTakip.Classes
 
         public DataView GetStock(string stockCode)
         {
-            var dt = GetRecords(string.Format (@"Select STOK_KODU,ISNULL((SELECT Sum(STHAR_GCMIK)
-                                FROM  dbo.TBLSTHAR
-                                WHERE[STOK_KODU] = a.STOK_KODU AND STHAR_GCKOD = 'G'  Group By STOK_KODU),0) -ISNULL((SELECT Sum(STHAR_GCMIK)
-                                FROM  dbo.TBLSTHAR
-                                WHERE[STOK_KODU] = a.STOK_KODU AND STHAR_GCKOD = 'C' Group By STOK_KODU),0) as Adet from dbo.TBLSTHAR as a
-                                WHERE STOK_KODU = '{0}'
-                                Group By STOK_KODU ", stockCode));
+            var dt = GetRecords(string.Format (@"Select Calc.STOK_KODU,Calc.ADET,STOK_ADI as Açıklama from  dbo.TBLSTSABIT  INNER JOIN 
+	                                            (Select STOK_KODU,ISNULL((SELECT Sum(STHAR_GCMIK) as ADET
+	                                            FROM  dbo.TBLSTHAR 
+	                                            WHERE [STOK_KODU] = newTable.Stok_kodu AND STHAR_GCKOD ='G'  Group By STOK_KODU),0) - ISNULL((SELECT Sum(STHAR_GCMIK)
+	                                            FROM  dbo.TBLSTHAR
+	                                            WHERE [STOK_KODU] = newTable.Stok_kodu AND STHAR_GCKOD ='C' Group By STOK_KODU),0) as ADET FROM  
+	                                            (Select st.STOK_KODU, st.STOK_ADI,st.SATIS_FIAT1,st.ALIS_DOV_TIP,st.SAT_DOV_TIP,
+	                                            sth.STHAR_GCMIK,sth.STHAR_GCKOD,sth.STHAR_TARIH, sth.STHAR_HTUR, sth.STHAR_DOVTIP, sth.STHAR_DOVFIAT, sth.SUBE_KODU  
+	                                            from [dbo].[TBLSTSABIT] as st Left Join [dbo].TBLSTHAR as sth on st.STOK_KODU = sth.STOK_KODU) as newTable
+	                                            Where STOK_KODU='{0}'
+	                                            Group By STOK_KODU) as Calc
+                                                ON dbo.TBLSTSABIT.STOK_KODU = Calc.STOK_KODU ORDER BY STOK_KODU;", stockCode));
 
             if (dt != null)
                 return dt.DefaultView;
@@ -125,16 +136,16 @@ namespace SNNetsisStokTakip.Classes
                     DECLARE @YeniMiktar int;
                     DECLARE @Result int;
                     SELECT @Result = -1;
-                    IF EXISTS (SELECT 1 FROM dbo.TBLSTHAR WHERE [STOK_KODU] =  @stockCode)
+                    IF EXISTS (SELECT 1 FROM dbo.TBLSTSABIT WHERE [STOK_KODU] =  @stockCode)
                     BEGIN
 	                    SELECT @YeniMiktar = @newAmount;
-	                    SELECT @EskiMiktar = (Select ISNULL((SELECT Sum(STHAR_GCMIK)
+	                    SELECT @EskiMiktar = ISNULL((Select ISNULL((SELECT Sum(STHAR_GCMIK)
 			                    FROM  dbo.TBLSTHAR
 			                    WHERE [STOK_KODU] = a.Stok_kodu AND STHAR_GCKOD ='G'  Group By STOK_KODU),0) - ISNULL((SELECT Sum(STHAR_GCMIK)
 			                    FROM  dbo.TBLSTHAR
 			                    WHERE [STOK_KODU] = a.Stok_kodu AND STHAR_GCKOD ='C' Group By STOK_KODU),0) as Adet from  dbo.TBLSTHAR as a 
 			                    Where STOK_KODU= @stockCode 
-			                    Group By STOK_KODU);
+			                    Group By STOK_KODU),0);
 
 	                    IF @EskiMiktar <> @YeniMiktar 
 	                    BEGIN
