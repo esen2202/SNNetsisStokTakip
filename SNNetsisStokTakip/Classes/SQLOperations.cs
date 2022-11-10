@@ -66,9 +66,11 @@ namespace SNNetsisStokTakip.Classes
             return new DataView();
         }
 
+
+
         public DataView GetStock(string stockCode)
         {
-            var dt = GetRecords(string.Format (@"Select STOK_KODU,ISNULL((SELECT Sum(STHAR_GCMIK)
+            var dt = GetRecords(string.Format(@"Select STOK_KODU,ISNULL((SELECT Sum(STHAR_GCMIK)
                                 FROM  dbo.TBLSTHAR
                                 WHERE[STOK_KODU] = a.STOK_KODU AND STHAR_GCKOD = 'G'  Group By STOK_KODU),0) -ISNULL((SELECT Sum(STHAR_GCMIK)
                                 FROM  dbo.TBLSTHAR
@@ -80,6 +82,28 @@ namespace SNNetsisStokTakip.Classes
                 return dt.DefaultView;
 
             return new DataView();
+        }
+
+        public ModelStockDetailed GetStockDetail(ModelStock stock)
+        {
+            var dt = GetRecords(string.Format(@"SELECT TOP (1) [STOK_KODU] ,[STHAR_NF],[STHAR_TARIH]  
+								FROM [dbo].[TBLSTHAR]   
+								Where STOK_KODU = '{0}' AND  STHAR_GCKOD = 'G'   
+								ORDER BY STHAR_TARIH DESC", stock.StockCode));
+
+            if (dt != null && dt.Rows.Count > 0)
+            {
+                var st = new ModelStockDetailed();
+                
+                st.StockCode = dt.Rows[0]["STOK_KODU"].ToString();
+                st.Amount = stock.Amount;
+                st.Price =Convert.ToDouble( dt.Rows[0]["STHAR_NF"]) ;
+                st.LastDate = (DateTime)dt.Rows[0]["STHAR_TARIH"];
+                return st;
+            }
+          
+
+            return new ModelStockDetailed();
         }
 
 

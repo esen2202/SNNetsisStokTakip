@@ -10,5 +10,14 @@ namespace SNNetsisStokTakip.Models
     {
         public string StockCode { get; set; }
         public double Amount { get; set; }
+ 
+    }
+
+    public class ModelStockDetailed  : ModelStock
+    {
+        public double Price { get; set; }
+
+        public DateTime LastDate { get; set; }
+
     }
 }

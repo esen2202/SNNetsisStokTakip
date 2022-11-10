@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace SNNetsisStokTakip.Views
 {
@@ -294,9 +295,16 @@ namespace SNNetsisStokTakip.Views
                 if (result == 1)
                 {
                     Snackbar.MessageQueue.Enqueue("Stok Güncellendi");
-                    tbAmount.Text = ConnectionManagement.SqlOperations.GetStock(tbStockCode.Text)[0]["Adet"].ToString().Split('.')[0].ToString();
-                    DataRowView rowView = (DataRowView)dgDb.SelectedItem;
-                    rowView.Row["Adet"] = tbAmount.Text;
+                    tbAmount.Text = ConnectionManagement.SqlOperations.GetStock(tbStockCode.Text)[0]["Adet"].ToString().Replace(",",".").Split('.')[0].ToString();
+                    if (dgDb.SelectedItem != null)
+                    {
+                        DataRowView rowView = (DataRowView)dgDb.SelectedItem;
+                        rowView.Row["Adet"] = tbAmount.Text;
+                    }
+                    else
+                    {
+                        UpdateDataGridByStokKod(tbStockCode.Text);
+                    }
                 }
 
                 else if (result == 0)
@@ -310,6 +318,19 @@ namespace SNNetsisStokTakip.Views
             }
 
 
+        }
+
+        private void UpdateDataGridByStokKod(string stokkod)
+        {
+            if (dgDb.ItemsSource is DataView)
+            {
+                foreach (DataRowView drv in (DataView)dgDb.ItemsSource)
+                    if (drv[0].ToString() == stokkod)
+                    {
+                        drv.Row["Adet"] = tbAmount.Text;
+                        dgDb.SelectedItem = drv;
+                    }
+            }
         }
 
         private void btnSuccess_Click(object sender, RoutedEventArgs e)
@@ -336,8 +357,21 @@ namespace SNNetsisStokTakip.Views
             object item = dgDb.SelectedItem;
             if (item != null)
             {
-                tbStockCode.Text = (dgDb.SelectedCells[0].Column.GetCellContent(item) as TextBlock).Text;
-                txtAmount.Text = tbAmount.Text = (dgDb.SelectedCells[1].Column.GetCellContent(item) as TextBlock).Text.Split('.')[0].ToString();
+               
+                ModelStock it = new ModelStock
+                {
+                    StockCode = (dgDb.SelectedCells[0].Column.GetCellContent(item) as TextBlock).Text,
+                    Amount = Convert.ToDouble((dgDb.SelectedCells[1].Column.GetCellContent(item) as TextBlock).Text.Split('.')[0].ToString()),
+                    
+                };
+                var result = ConnectionManagement.SqlOperations.GetStockDetail((ModelStock)it);
+                tbStockCode.Text = result.StockCode;
+                txtAmount.Text =result.Amount.ToString();
+                tbAmount.Text = result.Amount.ToString();
+                tbPrice.Text = result.Price.ToString();
+                tbPriceDate.Text = result.LastDate.ToShortDateString();
+                //tbStockCode.Text = (dgDb.SelectedCells[0].Column.GetCellContent(item) as TextBlock).Text;
+                //txtAmount.Text = tbAmount.Text = (dgDb.SelectedCells[1].Column.GetCellContent(item) as TextBlock).Text.Split('.')[0].ToString();
             }
         }
     }
