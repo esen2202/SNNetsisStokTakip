@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -62,7 +63,11 @@ namespace SNNetsisStokTakip.Views
 
         private void DgStockFilter(string stockKod)
         {
-            ConnectionManagement.StocksTable.RowFilter = "(STOK_KODU like '" + stockKod + "*')"; // Stok_kodu - Adet
+      
+            var resultString = Regex.Replace(stockKod,
+                                @"([*%_])", "[$1]");
+
+             ConnectionManagement.StocksTable.RowFilter = "(STOK_KODU like '" + resultString + "*')"; // Stok_kodu - Adet
         }
 
         private async void btnProcessStart_Click(object sender, RoutedEventArgs e)
@@ -295,7 +300,7 @@ namespace SNNetsisStokTakip.Views
                 if (result == 1)
                 {
                     Snackbar.MessageQueue.Enqueue("Stok Güncellendi");
-                    tbAmount.Text = ConnectionManagement.SqlOperations.GetStock(tbStockCode.Text)[0]["Adet"].ToString().Replace(",",".").Split('.')[0].ToString();
+                    tbAmount.Text = ConnectionManagement.SqlOperations.GetStock(tbStockCode.Text)[0]["Adet"].ToString().Replace(",", ".").Split('.')[0].ToString();
                     if (dgDb.SelectedItem != null)
                     {
                         DataRowView rowView = (DataRowView)dgDb.SelectedItem;
@@ -357,16 +362,16 @@ namespace SNNetsisStokTakip.Views
             object item = dgDb.SelectedItem;
             if (item != null)
             {
-               
+
                 ModelStock it = new ModelStock
                 {
                     StockCode = (dgDb.SelectedCells[0].Column.GetCellContent(item) as TextBlock).Text,
                     Amount = Convert.ToDouble((dgDb.SelectedCells[1].Column.GetCellContent(item) as TextBlock).Text.Split('.')[0].ToString()),
-                    
+
                 };
                 var result = ConnectionManagement.SqlOperations.GetStockDetail((ModelStock)it);
                 tbStockCode.Text = result.StockCode;
-                txtAmount.Text =result.Amount.ToString();
+                txtAmount.Text = result.Amount.ToString();
                 tbAmount.Text = result.Amount.ToString();
                 tbPrice.Text = result.Price.ToString();
                 tbPriceDate.Text = result.LastDate.ToShortDateString();

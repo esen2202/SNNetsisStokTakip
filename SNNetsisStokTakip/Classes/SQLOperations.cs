@@ -121,7 +121,7 @@ namespace SNNetsisStokTakip.Classes
                 }
             }
         }
-
+        
         public bool IfExistStockCode(string stockCode)
         {
             using (var conn = new SqlConnection(ConnectionManagement.SqlOperations.GenerateConnStr(ConnectionManagement.ConnStr)))
